@@ -12,8 +12,9 @@ Base = declarative_base()
 
 
 def connect_db():
-    engine = create_engine(DATABASE_URL, connect_args={})
-    session = Session(bind=engine.connect())
+    engine = create_engine(DATABASE_URL,
+                           connect_args={'check_same_thread': False})
+    session = Session(autocommit=False, autoflush=False, bind=engine.connect())
     return session
 
 
@@ -30,22 +31,22 @@ class User(Base):
     first_name = Column(String)
     last_name = Column(String)
     nick_name = Column(String)
-    created_at = Column(String, default=datetime)
+    created_at = Column(String, default=datetime.utcnow())
 
 
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
     title = Column(String)
     topic = Column(String)
     status = Column(String, default=PostStatus.IN_PROGRESS.value)
-    created_at = Column(String, default=datetime)
+    created_at = Column(String, default=datetime.utcnow())
 
 
 class AuthToken(Base):
     __tablename__ = 'auth_token'
     id = Column(Integer, primary_key=True)
     token = Column(String)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    created_at = Column(String, default=datetime)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    created_at = Column(String, default=datetime.utcnow())

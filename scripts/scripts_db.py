@@ -8,7 +8,7 @@ def main():
     engine = create_engine(DATABASE_URL)
     session = Session(bind=engine.connect())
 
-    session.execute('''create table users (
+    session.execute("""create table users (
     id integer not null primary key,
     email varchar(256),
     password varchar(256),
@@ -16,23 +16,23 @@ def main():
     last_name varchar(256),
     nick_name varchar(256),
     created_ad varchar(256)
-    );''')
+    );""")
 
-    session.execute('''create table token (
+    session.execute("""create table auth_token (
     id integer not null primary key,
     token varchar(256),
     user_id integer references users,
     created_at varchar(256),
-    );''')
+    );""")
 
-    session.execute(''' create table posts (
+    session.execute("""create table posts (
     id integer not null primary key,
     user_id integer references users,
     title varchar(256),
     topic varchar(256),
     status varchar(256),
     created_at varchar(256),
-    );''')
+    );""")
 
     session.close()
 

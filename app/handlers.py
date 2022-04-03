@@ -5,25 +5,26 @@ from starlette import status
 from app.forms import UserLoginForm, UserCreateForm
 from app.models import connect_db, User, AuthToken
 from app.utils import get_password_hash
+from app.auth import check_auth_token
 
 
 router = APIRouter()
 
 
-@router.post('/login', name='user_login')
+@router.post('/login', name='user:login')
 def user_login(user_form: UserLoginForm = Body(..., embed=True),
                database=Depends(connect_db)):
     user = database.query(User).filter(
-        User.email == user_form.email).one_or_more()
+        User.email == user_form.email).one_or_none()
     if not user or get_password_hash(user_form.password) != user.password:
         return {'error': 'email/pass invalid'}
     auth_token = AuthToken(token=str(uuid.uuid4()), user_id=user.id)
     database.add(auth_token)
     database.commit()
-    return {'status': 'ok'}
+    return {'auth_token': auth_token.token}
 
 
-@router.post('/user', name='user_create')
+@router.post('/user', name='user:create')
 def create_user(user: UserCreateForm = Body(..., embed=True),
                 database=Depends(connect_db)):
     exists_user = (database.query(User.id).
@@ -41,3 +42,10 @@ def create_user(user: UserCreateForm = Body(..., embed=True),
     database.add(new_user)
     database.commit()
     return {'user_id': new_user.id}
+
+
+@router.get('/user', name='user:get')
+def get_user(token: AuthToken = Depends(check_auth_token),
+             database=Depends(connect_db)):
+    user = database.query(User).filter(User.id == token.user_id).one_or_none()
+    return {'id': user.id, 'email': user.email, 'nickname': user.nick_name}
